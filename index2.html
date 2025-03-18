@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每日灵感</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #6a11cb, #2575fc);
+            color: white;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .content-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .content-box {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px 20px;
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .quote-mark {
+            font-size: 6rem;
+            line-height: 1;
+            position: absolute;
+            opacity: 0.7;
+        }
+
+        .open-quote {
+            top: 0;
+            left: 0;
+            transform: translateX(-50%);
+        }
+
+        .close-quote {
+            bottom: 60px;
+            right: 0;
+            transform: translateX(50%);
+        }
+
+        .quote-text {
+            font-size: 2.5rem;
+            line-height: 1.4;
+            margin: 20px 0;
+            font-weight: 300;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .first-letter {
+            font-size: 4rem;
+            font-weight: bold;
+        }
+
+        .quote-source {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .admin-link {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .admin-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .quote-text {
+                font-size: 1.8rem;
+            }
+
+            .first-letter {
+                font-size: 3rem;
+            }
+
+            .quote-source {
+                font-size: 1.2rem;
+            }
+
+            .quote-mark {
+                font-size: 4rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="admin2.html" class="admin-link">管理页面</a>
+    
+    <div class="content-container">
+        <div class="content-box" id="quote-display">
+            <div class="quote-mark open-quote">"</div>
+            <div class="quote-text">
+                <span class="first-letter">生</span>活中最重要的事情是确定一个伟大的目标，并决心实现它。
+            </div>
+            <div class="quote-mark close-quote">"</div>
+            <div class="quote-source">歌德</div>
+        </div>
+    </div>
+    
+    <audio id="background-music" loop>
+        <source src="music/background.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放。
+    </audio>
+    
+    <div class="controls">
+        <button id="music-toggle" class="control-btn">播放音乐</button>
+        <button id="refresh-quote" class="control-btn">换一条</button>
+    </div>
+
+    <script src="js/sync.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const musicToggle = document.getElementById('music-toggle');
+            const backgroundMusic = document.getElementById('background-music');
+            const refreshQuote = document.getElementById('refresh-quote');
+            const quoteDisplay = document.getElementById('quote-display');
+            
+            // 从本地存储加载API密钥和Bin ID
+            const apiKey = localStorage.getItem('apiKey');
+            const binId = localStorage.getItem('binId');
+            
+            // 初始化同步模块
+            QuoteSync.init({
+                apiKey: apiKey || '',
+                binId: binId || ''
+            });
+            
+            console.log('同步配置状态:', {
+                apiKey: apiKey ? '已配置' : '未配置',
+                binId: binId ? '已配置' : '未配置'
+            });
+            
+            // 音乐控制
+            musicToggle.addEventListener('click', function() {
+                if (backgroundMusic.paused) {
+                    backgroundMusic.play();
+                    musicToggle.textContent = '暂停音乐';
+                } else {
+                    backgroundMusic.pause();
+                    musicToggle.textContent = '播放音乐';
+                }
+            });
+            
+            // 默认名言数据
+            let quotes = [
+                {
+                    text: '<span class="first-letter">生</span>活中最重要的事情是确定一个伟大的目标，并决心实现它。',
+                    source: '歌德'
+                },
+                {
+                    text: '<span class="first-letter">成</span>功不是将来才有的，而是从决定去做那一刻起，持续累积而成。',
+                    source: '佚名'
+                },
+                {
+                    text: '<span class="first-letter">当</span>你感到悲伤时，最好是去学些什么东西。学习会使你永远立于不败之地。',
+                    source: '居里夫人'
+                },
+                {
+                    text: '<span class="first-letter">世</span>界上那些最容易的事情中，拖延时间最不费力。',
+                    source: '克雷洛夫'
+                },
+                {
+                    text: '<span class="first-letter">人</span>生就像骑单车，想保持平衡就得往前走。',
+                    source: '爱因斯坦'
+                }
+            ];
+            
+            // 从云端获取数据
+            async function fetchData() {
+                try {
+                    console.log('正在从云端获取数据...');
+                    const data = await QuoteSync.fetchFromCloud();
+                    console.log('获取到的数据:', data);
+                    
+                    if (data.quotes && data.quotes.length > 0) {
+                        console.log('成功获取到名言数据，共', data.quotes.length, '条');
+                        quotes = data.quotes;
+                        // 显示最新的名言
+                        const latestQuote = quotes[quotes.length - 1];
+                        updateQuoteDisplay(latestQuote);
+                    } else {
+                        console.warn('云端没有名言数据或数据为空');
+                    }
+                } catch (error) {
+                    console.error('获取数据失败:', error);
+                    alert('无法从云端获取数据，请确保已正确配置API密钥和Bin ID。将使用默认名言。');
+                }
+            }
+            
+            // 随机获取一条名言
+            function getRandomQuote() {
+                return quotes[Math.floor(Math.random() * quotes.length)];
+            }
+            
+            // 更新显示的名言
+            function updateQuote() {
+                const quote = getRandomQuote();
+                updateQuoteDisplay(quote);
+            }
+            
+            // 更新名言显示
+            function updateQuoteDisplay(quote) {
+                quoteDisplay.innerHTML = `
+                    <div class="quote-mark open-quote">"</div>
+                    <div class="quote-text">${quote.text}</div>
+                    <div class="quote-mark close-quote">"</div>
+                    <div class="quote-source">${quote.source}</div>
+                `;
+            }
+            
+            // 初始化加载数据
+            fetchData();
+            
+            // 点击刷新按钮更新名言
+            refreshQuote.addEventListener('click', updateQuote);
+            
+            // 从云端加载设置
+            async function loadSettings() {
+                try {
+                    const data = await QuoteSync.fetchFromCloud();
+                    
+                    // 更新背景颜色
+                    if (data.settings && data.settings.colorTop && data.settings.colorBottom) {
+                        document.body.style.background = `linear-gradient(to bottom, ${data.settings.colorTop}, ${data.settings.colorBottom})`;
+                    }
+                    
+                    // 加载自定义背景音乐
+                    const backgroundMusic = data.backgroundMusic || localStorage.getItem('backgroundMusic');
+                    let audioLoadFailed = false;
+                    
+                    if (backgroundMusic && document.getElementById('background-music')) {
+                        try {
+                            // 移除现有的音频源
+                            while (backgroundMusic.firstChild) {
+                                backgroundMusic.removeChild(backgroundMusic.firstChild);
+                            }
+                            
+                            // 添加新的音频源
+                            const source = document.createElement('source');
+                            
+                            // 检查Data URL的大小，GitHub Pages可能对大型Data URL支持有限
+                            if (backgroundMusic.startsWith('data:audio/') && backgroundMusic.length > 5000000) { // 约5MB
+                                console.warn('音频数据过大，可能在GitHub Pages上无法正常加载');
+                                audioLoadFailed = true;
+                            } else {
+                                source.src = backgroundMusic;
+                                // 对于Data URL格式的音频，需要根据其内容确定类型
+                                if (backgroundMusic.startsWith('data:audio/')) {
+                                    // 从Data URL中提取MIME类型
+                                    const mimeType = backgroundMusic.substring(5, backgroundMusic.indexOf(';'));
+                                    source.type = mimeType;
+                                } else {
+                                    // 默认类型
+                                    source.type = 'audio/mpeg';
+                                }
+                                backgroundMusic.appendChild(source);
+                            }
+                            
+                            // 添加错误处理
+                            backgroundMusic.onerror = function(e) {
+                                console.error('音频加载失败:', e);
+                                audioLoadFailed = true;
+                                loadDefaultAudio();
+                            };
+                            
+                            if (!audioLoadFailed) {
+                                // 重新加载音频元素
+                                backgroundMusic.load();
+                                
+                                // 添加加载完成事件处理
+                                backgroundMusic.oncanplaythrough = function() {
+                                    console.log('音频加载完成，可以播放');
+                                };
+                            }
+                        } catch (error) {
+                            console.error('处理音频时出错:', error);
+                            audioLoadFailed = true;
+                            loadDefaultAudio();
+                        }
+                    }
+                    
+                    // 当自定义音频加载失败时，加载默认音频
+                    function loadDefaultAudio() {
+                        console.log('尝试加载默认音频文件');
+                        // 清除现有音频源
+                        while (backgroundMusic.firstChild) {
+                            backgroundMusic.removeChild(backgroundMusic.firstChild);
+                        }
+                        
+                        // 添加默认音频源
+                        const defaultSource = document.createElement('source');
+                        defaultSource.src = 'music/background.mp3';
+                        defaultSource.type = 'audio/mpeg';
+                        backgroundMusic.appendChild(defaultSource);
+                        backgroundMusic.load();
+                    }
+                } catch (error) {
+                    console.error('加载设置失败:', error);
+                }
+            }
+            
+            // 加载设置
+            loadSettings();
+            
+            // 从云端获取名言数据
+            fetchData();
+        });
+    </script>
+</body>
+</html>

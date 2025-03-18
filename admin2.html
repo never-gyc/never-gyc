@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灵感管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #6a11cb;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        small {
+            display: block;
+            margin-top: 5px;
+            color: #777;
+            font-size: 0.85rem;
+        }
+
+        .preview-container {
+            margin-top: 10px;
+            padding: 15px;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .audio-controls {
+            margin-top: 10px;
+            padding: 15px;
+            border: 1px dashed #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .color-inputs {
+            display: flex;
+            gap: 20px;
+        }
+
+        .color-inputs > div {
+            flex: 1;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: #6a11cb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5a0db6;
+        }
+
+        .btn-secondary {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .quote-list {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .quote-list h2 {
+            margin-bottom: 15px;
+            color: #6a11cb;
+        }
+
+        .quote-item {
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .quote-item-text {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .quote-item-source {
+            font-style: italic;
+            color: #777;
+        }
+
+        .quote-item-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .quote-item-actions button {
+            background: none;
+            border: none;
+            color: #6a11cb;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.9rem;
+        }
+
+        .quote-item-actions button:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #6a11cb;
+            text-decoration: none;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>灵感管理系统</h1>
+        
+        <div class="form-group" id="sync-config-section">
+            <h2>云同步配置</h2>
+            <p>要启用跨设备同步功能，请配置以下信息：</p>
+            <div class="form-group">
+                <label for="api-key">API密钥 (JSONBin.io)</label>
+                <input type="text" id="api-key" name="api-key" placeholder="输入您的JSONBin.io API密钥">
+                <small>如果您没有API密钥，请前往 <a href="https://jsonbin.io/" target="_blank">JSONBin.io</a> 注册并获取</small>
+            </div>
+            <div class="form-group">
+                <label for="bin-id">Bin ID</label>
+                <input type="text" id="bin-id" name="bin-id" placeholder="输入您的Bin ID或点击下方按钮创建新的Bin">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-primary" id="save-config-btn">保存配置</button>
+                <button type="button" class="btn btn-secondary" id="create-bin-btn">创建新的Bin</button>
+            </div>
+            <div id="sync-status" style="margin-top: 10px; padding: 10px; border-radius: 4px;"></div>
+        </div>
+        
+        <form id="quote-form" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="quote-text">名言内容</label>
+                <textarea id="quote-text" name="quote-text" rows="4" placeholder="输入名言内容"></textarea>
+                <small>提示：使用 &lt;span class="first-letter"&gt;X&lt;/span&gt; 来标记首字母大写</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="quote-source">名言出处</label>
+                <input type="text" id="quote-source" name="quote-source" placeholder="例如：歌德">
+            </div>
+            
+            <div class="form-group">
+                <label for="background-music">背景音乐</label>
+                <input type="file" id="background-music-upload" name="background-music" accept="audio/*">
+                <div class="audio-controls" id="audio-preview">
+                    <p>音频预览区域</p>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="background-color">背景颜色</label>
+                <div class="color-inputs">
+                    <div>
+                        <label for="color-top">顶部颜色</label>
+                        <input type="color" id="color-top" name="color-top" value="#6a11cb">
+                    </div>
+                    <div>
+                        <label for="color-bottom">底部颜色</label>
+                        <input type="color" id="color-bottom" name="color-bottom" value="#2575fc">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">保存设置</button>
+                <button type="button" class="btn btn-secondary" id="preview-btn">预览效果</button>
+            </div>
+        </form>
+
+        <div class="quote-list">
+            <h2>名言列表</h2>
+            <div id="quotes-container">
+                <!-- 名言列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <a href="index2.html" class="back-link">返回首页</a>
+    </div>
+    
+    <script src="js/sync.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const quoteForm = document.getElementById('quote-form');
+            const quoteText = document.getElementById('quote-text');
+            const quoteSource = document.getElementById('quote-source');
+            const backgroundMusicUpload = document.getElementById('background-music-upload');
+            const colorTop = document.getElementById('color-top');
+            const colorBottom = document.getElementById('color-bottom');
+            const previewBtn = document.getElementById('preview-btn');
+            const audioPreview = document.getElementById('audio-preview');
+            const quotesContainer = document.getElementById('quotes-container');
+            
+            // 同步配置相关元素
+            const apiKeyInput = document.getElementById('api-key');
+            const binIdInput = document.getElementById('bin-id');
+            const saveConfigBtn = document.getElementById('save-config-btn');
+            const createBinBtn = document.getElementById('create-bin-btn');
+            const syncStatus = document.getElementById('sync-status');
+            
+            // 从本地存储加载配置
+            function loadConfig() {
+                const apiKey = localStorage.getItem('apiKey');
+                const binId = localStorage.getItem('binId');
+                
+                if (apiKey) {
+                    apiKeyInput.value = apiKey;
+                    QuoteSync.apiKey = apiKey;
+                }
+                
+                if (binId) {
+                    binIdInput.value = binId;
+                    QuoteSync.binId = binId;
+                }
+                
+                updateSyncStatus();
+            }
+            
+            // 更新同步状态显示
+            function updateSyncStatus() {
+                if (QuoteSync.apiKey && QuoteSync.binId) {
+                    syncStatus.textContent = '✅ 云同步已配置';
+                    syncStatus.style.backgroundColor = '#d4edda';
+                    syncStatus.style.color = '#155724';
+                } else {
+                    syncStatus.textContent = '⚠️ 云同步未配置，数据仅保存在本地';
+                    syncStatus.style.backgroundColor = '#fff3cd';
+                    syncStatus.style.color = '#856404';
+                }
+            }
+            
+            // 保存配置
+            saveConfigBtn.addEventListener('click', function() {
+                const apiKey = apiKeyInput.value.trim();
+                const binId = binIdInput.value.trim();
+                
+                if (apiKey && binId) {
+                    localStorage.setItem('apiKey', apiKey);
+                    localStorage.setItem('binId', binId);
+                    
+                    QuoteSync.apiKey = apiKey;
+                    QuoteSync.binId = binId;
+                    
+                    updateSyncStatus();
+                    alert('配置已保存！云同步功能已启用。');
+                    
+                    // 重新加载数据
+                    loadQuotes();
+                } else {
+                    alert('请输入有效的API密钥和Bin ID');
+                }
+            });
+            
+            // 创建新的Bin
+            createBinBtn.addEventListener('click', async function() {
+                const apiKey = apiKeyInput.value.trim();
+                
+                if (!apiKey) {
+                    alert('请先输入API密钥');
+                    return;
+                }
+                
+                QuoteSync.apiKey = apiKey;
+                
+                try {
+                    syncStatus.textContent = '正在创建新的Bin...';
+                    syncStatus.style.backgroundColor = '#cce5ff';
+                    syncStatus.style.color = '#004085';
+                    
+                    // 准备初始数据
+                    const initialData = {
+                        quotes: quotes,
+                        settings: {
+                            colorTop: colorTop.value,
+                            colorBottom: colorBottom.value
+                        }
+                    };
+                    
+                    const result = await QuoteSync.createNewBin(initialData);
+                    
+                    if (result.success) {
+                        binIdInput.value = result.binId;
+                        localStorage.setItem('binId', result.binId);
+                        QuoteSync.binId = result.binId;
+                        
+                        updateSyncStatus();
+                        alert(`新的Bin创建成功！Bin ID: ${result.binId}`);
+                    } else {
+                        alert(`创建失败: ${result.message}`);
+                        syncStatus.textContent = `⚠️ 创建失败: ${result.message}`;
+                        syncStatus.style.backgroundColor = '#f8d7da';
+                        syncStatus.style.color = '#721c24';
+                    }
+                } catch (error) {
+                    console.error('创建Bin时出错:', error);
+                    alert(`创建失败: ${error.message}`);
+                    syncStatus.textContent = `⚠️ 创建失败: ${error.message}`;
+                    syncStatus.style.backgroundColor = '#f8d7da';
+                    syncStatus.style.color = '#721c24';
+                }
+            });
+            
+            // 初始化同步模块
+            QuoteSync.init();
+            loadConfig();
+            
+            // 示例名言数据
+            let quotes = [
+                {
+                    id: 1,
+                    text: '<span class="first-letter">生</span>活中最重要的事情是确定一个伟大的目标，并决心实现它。',
+                    source: '歌德'
+                },
+                {
+                    id: 2,
+                    text: '<span class="first-letter">成</span>功不是将来才有的，而是从决定去做的那一刻起，持续累积而成。',
+                    source: '佚名'
+                },
+                {
+                    id: 3,
+                    text: '<span class="first-letter">当</span>你感到悲伤时，最好是去学些什么东西。学习会使你永远立于不败之地。',
+                    source: '居里夫人'
+                },
+                {
+                    id: 4,
+                    text: '<span class="first-letter">世</span>界上那些最容易的事情中，拖延时间最不费力。',
+                    source: '克雷洛夫'
+                },
+                {
+                    id: 5,
+                    text: '<span class="first-letter">人</span>生就像骑单车，想保持平衡就得往前走。',
+                    source: '爱因斯坦'
+                }
+            ];
+            
+            // 从云端加载名言数据
+            async function loadQuotes() {
+                try {
+                    const data = await QuoteSync.fetchFromCloud();
+                    if (data.quotes) {
+                        quotes = data.quotes;
+                    }
+                    renderQuotes();
+                } catch (error) {
+                    console.error('获取数据失败:', error);
+                    // 如果云端获取失败，尝试从本地获取
+                    const savedQuotes = localStorage.getItem('quotes');
+                    if (savedQuotes) {
+                        quotes = JSON.parse(savedQuotes);
+                    }
+                    renderQuotes();
+                }
+            }
+            
+            // 渲染名言列表
+            function renderQuotes() {
+                quotesContainer.innerHTML = '';
+                quotes.forEach(quote => {
+                    const quoteItem = document.createElement('div');
+                    quoteItem.className = 'quote-item';
+                    quoteItem.innerHTML = `
+                        <div class="quote-item-text">${quote.text}</div>
+                        <div class="quote-item-source">${quote.source}</div>
+                        <div class="quote-item-actions">
+                            <button class="edit-btn" data-id="${quote.id}">编辑</button>
+                            <button class="delete-btn" data-id="${quote.id}">删除</button>
+                        </div>
+                    `;
+                    quotesContainer.appendChild(quoteItem);
+                });
+                
+                // 添加编辑和删除事件监听
+                document.querySelectorAll('.edit-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        editQuote(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = parseInt(this.getAttribute('data-id'));
+                        deleteQuote(id);
+                    });
+                });
+            }
+            
+            // 编辑名言
+            function editQuote(id) {
+                const quote = quotes.find(q => q.id === id);
+                if (quote) {
+                    quoteText.value = quote.text;
+                    quoteSource.value = quote.source;
+                    quoteForm.setAttribute('data-edit-id', id);
+                }
+            }
+            
+            // 删除名言
+            function deleteQuote(id) {
+                if (confirm('确定要删除这条名言吗？')) {
+                    quotes = quotes.filter(q => q.id !== id);
+                    // 保存到云端
+                    QuoteSync.saveToCloud({ quotes: quotes });
+                    renderQuotes();
+                }
+            }
+            
+            // 音频预览功能
+            backgroundMusicUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        audioPreview.innerHTML = `
+                            <audio controls style="width: 100%;">
+                                <source src="${e.target.result}" type="${file.type}">
+                                您的浏览器不支持音频播放。
+                            </audio>
+                        `;
+                        
+                        // 检查音频数据大小
+                        const audioData = e.target.result;
+                        if (audioData.length > 5000000) { // 约5MB
+                            console.warn('音频数据过大，可能在GitHub Pages上无法正常加载');
+                            alert('警告：音频文件较大，在GitHub Pages上可能无法正常加载。建议使用小于5MB的音频文件。');
+                        }
+                        
+                        // 保存音乐到云端
+                        QuoteSync.saveToCloud({ backgroundMusic: audioData });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 预览功能
+            previewBtn.addEventListener('click', function() {
+                // 获取表单数据
+                const text = quoteText.value;
+                const source = quoteSource.value;
+                const topColor = colorTop.value;
+                const bottomColor = colorBottom.value;
+                
+                // 保存设置到云端
+                const settings = {
+                    colorTop: topColor,
+                    colorBottom: bottomColor
+                };
+                QuoteSync.saveToCloud({ settings: settings });
+                
+                // 打开预览窗口
+                window.open('index2.html', '_blank');
+            });
+            
+            // 表单提交处理
+            quoteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // 获取表单数据
+                const text = quoteText.value;
+                const source = quoteSource.value;
+                const topColor = colorTop.value;
+                const bottomColor = colorBottom.value;
+                
+                // 保存设置到云端
+                const settings = {
+                    colorTop: topColor,
+                    colorBottom: bottomColor
+                };
+                QuoteSync.saveToCloud({ settings: settings });
+                
+                // 检查是编辑还是新增
+                const editId = quoteForm.getAttribute('data-edit-id');
+                
+                // 获取上一次的名言（如果存在）
+                let lastQuote = null;
+                if (quotes.length > 0) {
+                    lastQuote = quotes[quotes.length - 1];
+                }
+                
+                // 只有当文本和出处都不为空时才更新
+                const hasNewContent = text.trim() !== '' && source.trim() !== '';
+                
+                if (editId) {
+                    // 编辑现有名言
+                    const index = quotes.findIndex(q => q.id === parseInt(editId));
+                    if (index !== -1) {
+                        // 如果有新内容则更新，否则保持原样
+                        if (hasNewContent) {
+                            quotes[index].text = text;
+                            quotes[index].source = source;
+                        }
+                        quoteForm.removeAttribute('data-edit-id');
+                    }
+                } else if (hasNewContent) {
+                    // 只有当有新内容时才添加新名言
+                    const newId = quotes.length > 0 ? Math.max(...quotes.map(q => q.id)) + 1 : 1;
+                    quotes.push({
+                        id: newId,
+                        text: text,
+                        source: source
+                    });
+                } else if (lastQuote) {
+                    // 如果没有新内容且存在上一条名言，则不做任何更改
+                    // 系统将继续显示上一条名言
+                    console.log('没有输入新内容，保留上一条名言：', lastQuote.text);
+                }
+                
+                // 保存名言到云端
+                QuoteSync.saveToCloud({ quotes: quotes });
+                
+                // 重新渲染名言列表
+                renderQuotes();
+                
+                // 重置表单
+                quoteForm.reset();
+                
+                alert('设置已保存！');
+            });
+            
+            // 初始化加载名言列表
+            loadQuotes();
+        });
+    </script>
+</body>
+</html>
